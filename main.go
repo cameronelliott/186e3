@@ -1,185 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
-	janus "github.com/notedit/janus-go"
-	"github.com/pion/webrtc/v2"
-	"github.com/pion/webrtc/v2/pkg/media"
-	"github.com/pion/webrtc/v2/pkg/media/ivfwriter"
-	"github.com/pion/webrtc/v2/pkg/media/oggwriter"
+	"flag"
+	"net/http"
+	"github.com/gorilla/websocket"
 )
 
-func saveToDisk(i media.Writer, track *webrtc.Track) {
-	defer func() {
-		if err := i.Close(); err != nil {
-			panic(err)
-		}
-	}()
+//var log = logging.NewDefaultLoggerFactory().NewLogger("janus")
+var log = (customLoggerFactory{}).NewLogger("janus")
 
-	for {
-		packet, err := track.ReadRTP()
-		if err != nil {
-			panic(err)
-		}
+var upgrader = websocket.Upgrader{}
 
-		if err := i.WriteRTP(packet); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func watchHandle(handle *janus.Handle) {
-	// wait for event
-	for {
-		msg := <-handle.Events
-		switch msg := msg.(type) {
-		case *janus.SlowLinkMsg:
-			fmt.Print("SlowLinkMsg type ", handle.ID)
-		case *janus.MediaMsg:
-			fmt.Print("MediaEvent type", msg.Type, " receiving ", msg.Receiving)
-		case *janus.WebRTCUpMsg:
-			fmt.Print("WebRTCUp type ", handle.ID)
-		case *janus.HangupMsg:
-			fmt.Print("HangupEvent type ", handle.ID)
-		case *janus.EventMsg:
-			fmt.Printf("EventMsg %+v", msg.Plugindata.Data)
-		}
+func checkError(err error) {
+	if err != nil {
+		panic(err)
 	}
 }
 
 func main() {
-	// Everything below is the pion-WebRTC API! Thanks for using it ❤️.
 
-	// Janus
-	gateway, err := janus.Connect("ws://localhost:8188/")
-	if err != nil {
-		panic(err)
-	}
+	port := flag.String("p", "9999", "http port")
+	flag.Parse()
 
-	// Create session
-	session, err := gateway.Create()
-	if err != nil {
-		panic(err)
-	}
+	// Websocket handle func
+	http.HandleFunc("/", inboundJanusNanomsgWebsocket)
 
-	// Create handle
-	handle, err := session.Attach("janus.plugin.streaming")
-	if err != nil {
-		panic(err)
-	}
-
-	go watchHandle(handle)
-
-	// Get streaming list
-	_, err = handle.Request(map[string]interface{}{
-		"request": "list",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	// Watch the second stream
-	msg, err := handle.Message(map[string]interface{}{
-		"request": "watch",
-		"id":      1,
-	}, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	if msg.Jsep != nil {
-
-		//fmt.Println(msg.Jsep["sdp"].(string))
-
-
-		offer := webrtc.SessionDescription{
-			Type: webrtc.SDPTypeOffer,
-			SDP:  msg.Jsep["sdp"].(string),
-		}
-
-		mediaEngine := webrtc.MediaEngine{}
-		if err = mediaEngine.PopulateFromSDP(offer); err != nil {
-			panic(err)
-		}
-
-		// Create a new RTCPeerConnection
-		var peerConnection *webrtc.PeerConnection
-		peerConnection, err = webrtc.NewAPI(webrtc.WithMediaEngine(mediaEngine)).NewPeerConnection(webrtc.Configuration{
-			ICEServers: []webrtc.ICEServer{
-				{
-					URLs: []string{"stun:stun.l.google.com:19302"},
-				},
-			},
-			SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
-		})
-		if err != nil {
-			panic(err)
-		}
-
-		// Allow us to receive 1 audio track, and 1 video track
-		if _, err = peerConnection.AddTransceiver(webrtc.RTPCodecTypeAudio); err != nil {
-			panic(err)
-		} else if _, err = peerConnection.AddTransceiver(webrtc.RTPCodecTypeVideo); err != nil {
-			panic(err)
-		}
-
-		peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-			fmt.Printf("Connection State has changed %s \n", connectionState.String())
-		})
-
-		peerConnection.OnTrack(func(track *webrtc.Track, receiver *webrtc.RTPReceiver) {
-			codec := track.Codec()
-			if codec.Name == webrtc.Opus {
-				fmt.Println("Got Opus track, saving to disk as output.ogg")
-				i, oggNewErr := oggwriter.New("output.ogg", codec.ClockRate, codec.Channels)
-				if oggNewErr != nil {
-					panic(oggNewErr)
-				}
-				saveToDisk(i, track)
-			} else if codec.Name == webrtc.VP8 {
-				fmt.Println("Got VP8 track, saving to disk as output.ivf")
-				i, ivfNewErr := ivfwriter.New("output.ivf")
-				if ivfNewErr != nil {
-					panic(ivfNewErr)
-				}
-				saveToDisk(i, track)
-			}
-		})
-
-		if err = peerConnection.SetRemoteDescription(offer); err != nil {
-			panic(err)
-		}
-
-		answer, answerErr := peerConnection.CreateAnswer(nil)
-		if answerErr != nil {
-			panic(answerErr)
-		}
-
-		err = peerConnection.SetLocalDescription(answer)
-		if err != nil {
-			panic(err)
-		}
-
-		// now we start
-		_, err = handle.Message(map[string]interface{}{
-			"request": "start",
-		}, map[string]interface{}{
-			"type":    "answer",
-			"sdp":     answer.SDP,
-			"trickle": false,
-		})
-		if err != nil {
-			panic(err)
-		}
-	}
-	for {
-		_, err = session.KeepAlive()
-		if err != nil {
-			panic(err)
-		}
-
-		time.Sleep(5 * time.Second)
-	}
+	// Support https, so we can test by lan
+	log.Info("Web listening :" + *port)
+	panic(http.ListenAndServe(":"+*port, nil))
 }
+
+
