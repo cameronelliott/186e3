@@ -37,6 +37,7 @@ type terseLoggerFactory struct {
 }
 
 func (c terseLoggerFactory) NewLogger(subsystem string) logging.LeveledLogger {
-	fmt.Printf("Creating logger for %s \n", subsystem)
-	return terseLogger{}
+	tl := terseLogger{}
+	tl.Infof("Creating logger for %s", subsystem)
+	return tl
 }
