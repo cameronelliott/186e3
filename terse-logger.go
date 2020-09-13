@@ -19,7 +19,7 @@ func (c terseLogger) Debugf(format string, args ...interface{}) {
 }
 func (c terseLogger) Info(msg string) { fmt.Printf("i %s\n", msg) }
 func (c terseLogger) Infof(format string, args ...interface{}) {
-	c.Trace(fmt.Sprintf(format, args...))
+	c.Info(fmt.Sprintf(format, args...))
 }
 func (c terseLogger) Warn(msg string) { fmt.Printf("w %s\n", msg) }
 func (c terseLogger) Warnf(format string, args ...interface{}) {
