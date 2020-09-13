@@ -7,7 +7,7 @@ import (
 )
 
 //var log = logging.NewDefaultLoggerFactory().NewLogger("janus")
-var log = (customLoggerFactory{}).NewLogger("janus")
+var log = (terseLoggerFactory{}).NewLogger("janus")
 
 var upgrader = websocket.Upgrader{}
 
