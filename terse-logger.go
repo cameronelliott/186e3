@@ -10,8 +10,10 @@ type terseLogger struct {
 }
 
 // Print all messages except trace
-func (c terseLogger) Trace(msg string)                          {}
-func (c terseLogger) Tracef(format string, args ...interface{}) {}
+func (c terseLogger) Trace(msg string) { fmt.Printf("t %s\n", msg) }
+func (c terseLogger) Tracef(format string, args ...interface{}) {
+	c.Trace(fmt.Sprintf(format, args...))
+}
 
 func (c terseLogger) Debug(msg string) { fmt.Printf("d %s\n", msg) }
 func (c terseLogger) Debugf(format string, args ...interface{}) {
@@ -38,6 +40,6 @@ type terseLoggerFactory struct {
 
 func (c terseLoggerFactory) NewLogger(subsystem string) logging.LeveledLogger {
 	tl := terseLogger{}
-	tl.Infof("Creating logger for %s", subsystem)
+	tl.Debugf("Creating logger for %s", subsystem)
 	return tl
 }
