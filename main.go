@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -11,7 +12,8 @@ var log = (terseLoggerFactory{}).NewLogger("janus")
 
 var upgrader = websocket.Upgrader{}
 
-func checkError(err error) {
+
+func check(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -29,5 +31,3 @@ func main() {
 	log.Info("Web listening :" + *port)
 	panic(http.ListenAndServe(":"+*port, nil))
 }
-
-

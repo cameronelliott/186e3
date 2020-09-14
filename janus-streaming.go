@@ -53,11 +53,7 @@ func watchHandle(handle *janus.Handle) {
 	}
 }
 
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+
 
 // tcp connection
 func getGateway() *janus.Gateway {
@@ -232,14 +228,14 @@ func inboundJanusNanomsgWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	// Websocket client
 	c, err := upgrader.Upgrade(w, r, nil)
-	checkError(err)
+	check(err)
 	defer func() {
-		checkError(c.Close())
+		check(c.Close())
 	}()
 	log.Debugf("negotiated subproto <%s>", c.Subprotocol())
 
 	gateway, err := janus.ConnectConn(c)
-	checkError(err)
+	check(err)
 
 	session := getSession(gateway)
 	handle := getPluginHandle(session)
@@ -249,11 +245,11 @@ func inboundJanusNanomsgWebsocket(w http.ResponseWriter, r *http.Request) {
 	makeWebRTCSession(gateway, session, handle)
 
 	// err = c.WriteMessage(1, []byte("{\"janus\" : \"keepalive\",}"))
-	// checkError(err)
+	// check(err)
 
 	// Read sdp from websocket
 	// mt, msg, err := c.ReadMessage()
-	// checkError(err)
+	// check(err)
 
 	// fmt.Println(999, string(msg))
 
