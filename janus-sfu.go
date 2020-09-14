@@ -9,7 +9,7 @@ import (
 	janus "github.com/notedit/janus-go"
 )
 
-var log = (TerseLoggerFactory{}).NewLogger("controller")
+
 
 var janusUpgrader = websocket.Upgrader{}
 var plainUpgrader = websocket.Upgrader{}
@@ -23,11 +23,7 @@ func init() {
 	plainUpgrader.Subprotocols = []string{} //not needed, but helpful for understanding
 }
 
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+
 
 func watchHandle(handle *janus.Handle) {
 	// wait for event
