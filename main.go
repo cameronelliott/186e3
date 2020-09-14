@@ -6,13 +6,14 @@ import (
 	"time"
 
 
-	"github.com/x186k/x186k"
+
 
 	janus "github.com/notedit/janus-go"
 )
 
 //var log = logging.NewDefaultLoggerFactory().NewLogger("janus")
-var log = (x186k.TerseLoggerFactory{}).NewLogger("controller")
+
+var log = (TerseLoggerFactory{}).NewLogger("controller")
 
 var sdpMessages = make(chan string, 100)
 
@@ -56,12 +57,12 @@ func main() {
 
 func inboundFromBrowserThenForwardSDPToJanus(w http.ResponseWriter, r *http.Request) {
 
-	c := plainUpgrade(w, r)
-	defer func() {
-		check(c.Close())
-	}()
+	// c := plainUpgrade(w, r)
+	// defer func() {
+	// 	check(c.Close())
+	// }()
 
-	_,msg,err:=	c.ReadMessage()
+	// _,msg,err:=	c.ReadMessage()
 
 
 
