@@ -6,40 +6,58 @@ import (
 	"github.com/pion/logging"
 )
 
-type terseLogger struct {
+// TerseLogger struct stasifying the Logger interface
+type TerseLogger struct {
 }
 
-// Print all messages except trace
-func (c terseLogger) Trace(msg string) { fmt.Printf("t %s\n", msg) }
-func (c terseLogger) Tracef(format string, args ...interface{}) {
+// Trace will log message at said level
+func (c TerseLogger) Trace(msg string) { fmt.Printf("t %s\n", msg) }
+
+// Tracef will log message at said level,printf style
+func (c TerseLogger) Tracef(format string, args ...interface{}) {
 	c.Trace(fmt.Sprintf(format, args...))
 }
 
-func (c terseLogger) Debug(msg string) { fmt.Printf("d %s\n", msg) }
-func (c terseLogger) Debugf(format string, args ...interface{}) {
+// Debug will log message at said level
+func (c TerseLogger) Debug(msg string) { fmt.Printf("d %s\n", msg) }
+
+// Debugf will log message at said level,printf style
+func (c TerseLogger) Debugf(format string, args ...interface{}) {
 	c.Debug(fmt.Sprintf(format, args...))
 }
-func (c terseLogger) Info(msg string) { fmt.Printf("i %s\n", msg) }
-func (c terseLogger) Infof(format string, args ...interface{}) {
+
+// Info will log message at said level
+func (c TerseLogger) Info(msg string) { fmt.Printf("i %s\n", msg) }
+
+// Infof will log message at said level,printf style
+func (c TerseLogger) Infof(format string, args ...interface{}) {
 	c.Info(fmt.Sprintf(format, args...))
 }
-func (c terseLogger) Warn(msg string) { fmt.Printf("w %s\n", msg) }
-func (c terseLogger) Warnf(format string, args ...interface{}) {
+
+// Warn will log message at said level
+func (c TerseLogger) Warn(msg string) { fmt.Printf("w %s\n", msg) }
+
+// Warnf will log message at said level,printf style
+func (c TerseLogger) Warnf(format string, args ...interface{}) {
 	c.Warn(fmt.Sprintf(format, args...))
 }
-func (c terseLogger) Error(msg string) { fmt.Printf("e %s\n", msg) }
-func (c terseLogger) Errorf(format string, args ...interface{}) {
+// Error will log message at said level
+func (c TerseLogger) Error(msg string) { fmt.Printf("e %s\n", msg) }
+
+// Errorf will log message at said level,printf style
+func (c TerseLogger) Errorf(format string, args ...interface{}) {
 	c.Error(fmt.Sprintf(format, args...))
 }
 
-// terseLoggerFactory satisfies the interface logging.LoggerFactory
+// TerseLoggerFactory satisfies the interface logging.LoggerFactory
 // This allows us to create different loggers per subsystem. So we can
 // add custom behavior
-type terseLoggerFactory struct {
+type TerseLoggerFactory struct {
 }
 
-func (c terseLoggerFactory) NewLogger(subsystem string) logging.LeveledLogger {
-	tl := terseLogger{}
+// NewLogger creates LeveledLogger with given scope/subsystem name 
+func (c TerseLoggerFactory) NewLogger(subsystem string) logging.LeveledLogger {
+	tl := TerseLogger{}
 	tl.Infof("Creating logger for %s", subsystem)
 	return tl
 }
