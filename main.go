@@ -3,11 +3,10 @@ package main
 import (
 	"flag"
 	"net/http"
+	"net/url"
 	"time"
 
-
-
-
+	"github.com/gorilla/websocket"
 	janus "github.com/notedit/janus-go"
 )
 
@@ -17,31 +16,50 @@ var log = (TerseLoggerFactory{}).NewLogger("controller")
 
 var sdpMessages = make(chan string, 100)
 
-
-
-
-
 func check(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
+type vertex struct {
+	X int
+	Y int
+}
 
-func doClientMode(url string) {
+func doClientMode(testaddr string) {
 
+	u := url.URL{Scheme: "ws", Host: testaddr, Path: "/echo"}
+	log.Infof("connecting to %s", u.String())
+
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	check(err)
+	defer c.Close()
+
+	c.WriteJSON(vertex{3,4})
+}
+
+func inboundFromBrowserThenForwardSDPToJanus(w http.ResponseWriter, r *http.Request) {
+
+	c := plainUpgrade(w, r)
+	defer func() {
+		check(c.Close())
+	}()
+
+	var v vertex
+
+	err := c.ReadJSON(&v)
+	check(err)
+
+	log.Infof("got msg %+v",v);
 }
 
 func main() {
 
 	port := flag.String("p", "9999", "http port")
-	controllerURL := flag.String("client-test-mode", "", "URL of this program running without this flag")
 	flag.Parse()
 
-	if len(*controllerURL)>0 {
-		doClientMode(*controllerURL)
-		return
-	}
+
 
 	//http.HandleFunc("/browser-inbound", inboundJanusThenCreatePionReceiver)
 
@@ -55,22 +73,7 @@ func main() {
 	panic(http.ListenAndServe(":"+*port, nil))
 }
 
-func inboundFromBrowserThenForwardSDPToJanus(w http.ResponseWriter, r *http.Request) {
-
-	// c := plainUpgrade(w, r)
-	// defer func() {
-	// 	check(c.Close())
-	// }()
-
-	// _,msg,err:=	c.ReadMessage()
-
-
-
-
-}
-
 func inboundJanusThenWaitForRTCSessions(w http.ResponseWriter, r *http.Request) {
-	
 
 	c := janusNanomsgUpgrade(w, r)
 	defer func() {
